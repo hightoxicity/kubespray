@@ -38,6 +38,19 @@ def tfstates(root=None):
             if os.path.splitext(name)[-1] == '.tfstate':
                 yield os.path.join(dirpath, name)
 
+def iteroutputs(filenames):
+    for filename in filenames:
+        with open(filename, 'r') as json_file:
+            state = json.load(json_file)
+            for module in state['modules']:
+                name = module['path'][-1]
+                for key, resource in module['outputs'].items():
+                    yield name, key, resource
+
+def getoutputval(outputs, outputname):
+    for module_name, key, resource in outputs:
+        if key == outputname:
+            return resource["value"]
 
 def iterresources(filenames):
     for filename in filenames:
@@ -147,7 +160,6 @@ def parse_bool(string_form):
         return False
     else:
         raise ValueError('could not convert %r to a bool' % string_form)
-
 
 @parses('triton_machine')
 @calculate_mantl_vars
@@ -768,11 +780,13 @@ def main():
 
     hosts = iterhosts(iterresources(tfstates(args.root)))
 
-    # Perform a second pass on the file to pick up floating_ip entries to update the ip address of referenced hosts
-    ips = dict(iterips(iterresources(tfstates(args.root))))
+    usefiptossh = getoutputval(iteroutputs(tfstates(args.root)), "use_fip_to_ssh")
 
-    if ips:
-        hosts = iter_host_ips(hosts, ips)
+    if usefiptossh is None or usefiptossh == "true":
+        # Perform a second pass on the file to pick up floating_ip entries to update the ip address of referenced hosts
+        ips = dict(iterips(iterresources(tfstates(args.root))))
+        if ips:
+            hosts = iter_host_ips(hosts, ips)
 
     if args.list:
         output = query_list(hosts)

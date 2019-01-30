@@ -156,3 +156,92 @@ variable "worker_allowed_ports" {
     }
   ]
 }
+
+variable "router_extra_interfaces" {
+  type        = "map"
+  description = "Map of network to connect (network id as key, List of map of strings with subnet_id/ip_address, look at fixed_ip on openstack_networking_port_v2 for help)"
+  default     = {
+  }
+}
+
+variable "router_extra_routes" {
+  type        = "map"
+  description = "A map of routes to register near the kube neutron router (key=route, value=nexthop)"
+  default     = {
+  }
+}
+
+variable "use_fip_to_ssh" {
+  type        = "string"
+  description = "When set to false, the host script will use private ip of instances instead of floating ip"
+  default     = "true"
+}
+
+/*
+variable "router_disable_snat" {
+  type        = "string"
+  description = "Allow to disable snat on k8s neutron router (true or false as string)"
+  default     = "false"
+}
+*/
+
+variable "vyos_router" {
+  type        = "string"
+  description = "Spawn a vyos software router"
+  default     = "false"
+}
+
+variable "vyos_image" {
+  type        = "string"
+  description = "Vyos image to use"
+  default     = "vyos"
+}
+
+variable "flavor_vyos" {
+  description = "Use 'nova flavor-list' command to see what your OpenStack instance uses for IDs"
+  default     = 3
+}
+
+variable "vyos_user" {
+  type        = "string"
+  description = "User to create on the vyos instance"
+  default     = "vyos"
+}
+
+variable "vyos_user_pwd" {
+  type        = "string"
+  description = "vyos_user mkpasswd -m sha-512 crypted password (default = vyos)"
+  default     = "$6$Mln2atYRwvfJ7$a8aW.pHBsqenSH2N0lmd1f7LOHrafIEjVYaBzYTOWTKcAAwGME.jWpQ8QnutI79.q1QW2QZPmNaStlwGAE.pn/"
+}
+
+variable "vyos_delete_vyos_user" {
+  type        = "string"
+  description = "true to delete vyos default user"
+  default     = "false"
+}
+
+/*
+variable "k8s_subnet_no_gateway" {
+  type        = "string"
+  description = "true to not set df gateway on k8s subnet"
+  default     = "false"
+}
+*/
+
+variable "neutron_router_index_in_k8s_subnet" {
+  type        = "string"
+  description = "neutron router index to compute ip"
+  default     = "1"
+}
+
+variable "k8s_subnet_gw_index" {
+  type        = "string"
+  description = "Gateway index to compute ip"
+  default     = "1"
+}
+
+variable "routes_to_vyos" {
+  type        = "list"
+  description = "Routes to vyos on k8s subnet"
+  default     = []
+}

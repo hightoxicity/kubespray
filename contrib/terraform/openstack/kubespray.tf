@@ -1,12 +1,23 @@
 module "network" {
   source = "modules/network"
 
-  external_net    = "${var.external_net}"
-  network_name    = "${var.network_name}"
-  subnet_cidr     = "${var.subnet_cidr}"
-  cluster_name    = "${var.cluster_name}"
-  dns_nameservers = "${var.dns_nameservers}"
-  use_neutron     = "${var.use_neutron}"
+  external_net                       = "${var.external_net}"
+  network_name                       = "${var.network_name}"
+  subnet_cidr                        = "${var.subnet_cidr}"
+  cluster_name                       = "${var.cluster_name}"
+  dns_nameservers                    = "${var.dns_nameservers}"
+  use_neutron                        = "${var.use_neutron}"
+  router_extra_interfaces            = "${var.router_extra_interfaces}"
+  router_extra_routes                = "${var.router_extra_routes}"
+/*
+  router_disable_snat                = "${var.router_disable_snat}"
+*/
+  vyos_router                        = "${var.vyos_router}"
+/*
+  k8s_subnet_no_gateway              = "${var.k8s_subnet_no_gateway}"
+*/
+  neutron_router_index_in_k8s_subnet = "${var.neutron_router_index_in_k8s_subnet}"
+  k8s_subnet_gw_index                = "${var.k8s_subnet_gw_index}"
 }
 
 module "ips" {
@@ -20,6 +31,28 @@ module "ips" {
   external_net                  = "${var.external_net}"
   network_name                  = "${var.network_name}"
   router_id                     = "${module.network.router_id}"
+}
+
+module "vyos" {
+  source = "modules/vyos"
+
+  k8s_network_id           = "${module.network.network_id}"
+  k8s_network_name         = "${var.network_name}"
+  vyos_router              = "${var.vyos_router}"
+  keypair                  = "kubernetes-${var.cluster_name}"
+  vyos_image               = "${var.vyos_image}"
+  flavor_vyos              = "${var.flavor_vyos}"
+  az_list                  = "${var.az_list}"
+  cluster_name             = "${var.cluster_name}"
+  router_extra_interfaces  = "${var.router_extra_interfaces}"
+  router_extra_routes      = "${var.router_extra_routes}"
+  network_name             = "${var.network_name}"
+  k8s_subnet_cidr          = "${var.subnet_cidr}"
+  k8s_subnet_id            = "${module.network.subnet_id}"
+  vyos_user                = "${var.vyos_user}"
+  vyos_user_pwd            = "${var.vyos_user_pwd}"
+  vyos_delete_vyos_user    = "${var.vyos_delete_vyos_user}"
+  routes_to_vyos           = "${var.routes_to_vyos}"
 }
 
 module "compute" {
@@ -57,6 +90,10 @@ module "compute" {
   worker_allowed_ports                         = "${var.worker_allowed_ports}"
 
   network_id = "${module.network.router_id}"
+}
+
+output "use_fip_to_ssh" {
+  value = "${var.use_fip_to_ssh}"
 }
 
 output "private_subnet_id" {
